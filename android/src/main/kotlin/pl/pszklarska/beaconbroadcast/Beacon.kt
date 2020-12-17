@@ -36,9 +36,11 @@ class Beacon {
         .setTxPower(beaconData.transmissionPower ?: -59)
         .setDataFields(Arrays.asList(0L))
         .setManufacturer(beaconData.manufacturerId ?: RADIUS_NETWORK_MANUFACTURER)
-        .build()
+            .build()
 
-
+    beaconTransmitter?.advertiseMode = AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY
+    beaconTransmitter?.advertiseTxPowerLevel = AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
+    beaconTransmitter?.isConnectable = false
     beaconTransmitter?.startAdvertising(beacon, object : AdvertiseCallback() {
       override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
         super.onStartSuccess(settingsInEffect)
