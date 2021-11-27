@@ -7,7 +7,6 @@ import org.altbeacon.beacon.Beacon
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.BeaconTransmitter
 import org.altbeacon.beacon.BeaconTransmitter.checkTransmissionSupported
-import java.util.*
 
 const val RADIUS_NETWORK_MANUFACTURER = 0x0118
 
@@ -25,22 +24,26 @@ class Beacon {
     this.advertiseCallback = advertiseCallback
 
     if (isTransmissionSupported() == 0) {
-      val beaconParser = BeaconParser().setBeaconLayout(beaconData.layout ?: BeaconParser.ALTBEACON_LAYOUT)
+      val beaconParser = BeaconParser().setBeaconLayout(beaconData.layout
+          ?: BeaconParser.ALTBEACON_LAYOUT)
       beaconTransmitter = BeaconTransmitter(context, beaconParser)
     }
 
-    val beacon = Beacon.Builder()
-        .setId1(beaconData.uuid)
-        .setId2(beaconData.majorId.toString())
-        .setId3(beaconData.minorId.toString())
-        .setTxPower(beaconData.transmissionPower ?: -59)
-        .setDataFields(Arrays.asList(0L))
-        .setManufacturer(beaconData.manufacturerId ?: RADIUS_NETWORK_MANUFACTURER)
-            .build()
+    val advertiseMode = beaconData.advertiseMode ?: AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY
 
-    beaconTransmitter?.advertiseMode = AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY
+    val beacon = Beacon.Builder().apply {
+      setId1(beaconData.uuid)
+      beaconData.majorId?.let { setId2(it.toString()) }
+      beaconData.minorId?.let { setId3(it.toString()) }
+      setTxPower(beaconData.transmissionPower ?: -59)
+      setDataFields(beaconData.extraData?.map { it.toLong() } ?: listOf(0L))
+      setManufacturer(beaconData.manufacturerId ?: RADIUS_NETWORK_MANUFACTURER)
+    }.build()
+
+    beaconTransmitter?.advertiseMode = advertiseMode
     beaconTransmitter?.advertiseTxPowerLevel = AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
     beaconTransmitter?.isConnectable = false
+
     beaconTransmitter?.startAdvertising(beacon, object : AdvertiseCallback() {
       override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
         super.onStartSuccess(settingsInEffect)
